@@ -113,3 +113,10 @@ class DevicePosition(BaseModel):
     location: Location
 
     model_config = {"populate_by_name": True}
+
+
+class NearbyDevice(BaseModel):
+    device: DeviceRead
+    distance_meters: float = Field(ge=0, alias="distanceMeters")
+
+    model_config = {"populate_by_name": True}
