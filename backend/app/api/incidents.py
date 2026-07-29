@@ -2,10 +2,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
-from backend.app.api.devices import repository as device_repository
 from backend.app.config import get_settings
-from backend.app.repositories.incidents import IncidentNotFoundError, InMemoryIncidentRepository
-from backend.app.repositories.support_alerts import InMemorySupportAlertRepository
+from backend.app.dependencies import (
+    device_repository,
+    incident_repository as repository,
+    support_alert_repository,
+)
+from backend.app.repositories.incidents import IncidentNotFoundError
 from backend.app.schemas import (
     CancelIncident,
     IncidentRead,
@@ -21,8 +24,6 @@ from backend.app.services.support import create_support_alerts, respond_to_alert
 from backend.app.ws.manager import control_room_manager
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
-repository = InMemoryIncidentRepository()
-support_alert_repository = InMemorySupportAlertRepository()
 
 ALLOWED_TRANSITIONS = {
     "detected": {"acknowledged", "resolved"},

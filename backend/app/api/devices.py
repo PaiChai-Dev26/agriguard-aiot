@@ -5,12 +5,11 @@ from fastapi import APIRouter, HTTPException, status
 from backend.app.repositories.devices import (
     DeviceAlreadyExistsError,
     DeviceNotFoundError,
-    InMemoryDeviceRepository,
 )
+from backend.app.dependencies import device_repository as repository
 from backend.app.schemas import DevicePosition, DeviceRead, DeviceRegister
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
-repository = InMemoryDeviceRepository()
 
 
 def _get_or_404(device_id: str) -> DeviceRead:
