@@ -86,3 +86,30 @@ class SosPayload(BaseModel):
     emergency_call_uri: str = Field(default="tel:119", alias="emergencyCallUri")
 
     model_config = {"populate_by_name": True}
+
+
+class DeviceRegister(BaseModel):
+    device_id: str = Field(min_length=3, max_length=80, alias="deviceId")
+    display_name: str = Field(min_length=1, max_length=100, alias="displayName")
+    device_type: Literal["tractor", "cultivator", "simulator", "other"] = Field(
+        default="other", alias="deviceType"
+    )
+
+    model_config = {"populate_by_name": True}
+
+
+class DeviceRead(DeviceRegister):
+    registered_at: datetime = Field(alias="registeredAt")
+    last_seen_at: datetime | None = Field(default=None, alias="lastSeenAt")
+    online: bool = False
+    location: Location | None = None
+    battery_percent: int | None = Field(default=None, ge=0, le=100, alias="batteryPercent")
+    solar_charging: bool | None = Field(default=None, alias="solarCharging")
+
+
+class DevicePosition(BaseModel):
+    device_id: str = Field(alias="deviceId")
+    recorded_at: datetime = Field(alias="recordedAt")
+    location: Location
+
+    model_config = {"populate_by_name": True}
