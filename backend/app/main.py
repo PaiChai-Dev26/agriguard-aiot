@@ -8,6 +8,7 @@ from backend.app.api.incidents import router as incidents_router
 from backend.app.config import get_settings
 from backend.app.schemas import IncidentRead, RiskResult, Telemetry
 from backend.app.services.risk import assess_risk
+from backend.app.ws.manager import control_room_manager
 from backend.app.ws.routes import router as websocket_router
 
 app = FastAPI(title="AgriGuard API", version="0.1.0")
@@ -21,11 +22,19 @@ def health() -> dict[str, str]:
 
 
 @app.post("/api/v1/telemetry", response_model=RiskResult)
-def ingest_telemetry(sample: Telemetry) -> RiskResult:
+async def ingest_telemetry(sample: Telemetry) -> RiskResult:
     result = assess_risk(sample)
+    await control_room_manager.broadcast(
+        {
+            "type": "device.telemetry",
+            "deviceId": sample.device_id,
+            "occurredAt": sample.occurred_at.isoformat(),
+            "risk": result.model_dump(by_alias=True),
+        }
+    )
     if result.classification == "rollover":
         settings = get_settings()
-        incident_repository.add(
+        incident = incident_repository.add(
             IncidentRead(
                 id=uuid4(),
                 deviceId=sample.device_id,
@@ -36,5 +45,11 @@ def ingest_telemetry(sample: Telemetry) -> RiskResult:
                 confirmationDeadline=sample.occurred_at
                 + timedelta(seconds=settings.confirmation_seconds),
             )
+        )
+        await control_room_manager.broadcast(
+            {
+                "type": "incident.suspected",
+                "incident": incident.model_dump(mode="json", by_alias=True),
+            }
         )
     return result
