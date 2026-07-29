@@ -73,3 +73,16 @@ class IncidentStatusUpdate(BaseModel):
 
 class CancelIncident(BaseModel):
     reason: str = Field(default="operator_cancelled", min_length=1, max_length=200)
+
+
+class SosPayload(BaseModel):
+    type: Literal["sos.created"] = "sos.created"
+    incident_id: UUID = Field(alias="incidentId")
+    device_id: str = Field(alias="deviceId")
+    occurred_at: datetime = Field(alias="occurredAt")
+    location: Location
+    risk_score: float = Field(alias="riskScore")
+    summary: str
+    emergency_call_uri: str = Field(default="tel:119", alias="emergencyCallUri")
+
+    model_config = {"populate_by_name": True}
