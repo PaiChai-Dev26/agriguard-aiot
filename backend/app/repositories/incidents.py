@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from datetime import datetime
 from threading import RLock
 from uuid import UUID
 
@@ -31,6 +34,16 @@ class InMemoryIncidentRepository:
         with self._lock:
             return sorted(self._items.values(), key=lambda item: item.occurred_at, reverse=True)
 
+    def pending_due(self, now: datetime) -> list[IncidentRead]:
+        with self._lock:
+            return [
+                incident
+                for incident in self._items.values()
+                if incident.status == "pending_confirmation"
+                and incident.confirmation_deadline is not None
+                and incident.confirmation_deadline <= now
+            ]
+
     def replace(self, incident: IncidentRead) -> IncidentRead:
         self.get(incident.id)
         with self._lock:
@@ -40,4 +53,3 @@ class InMemoryIncidentRepository:
     def clear(self) -> None:
         with self._lock:
             self._items.clear()
-

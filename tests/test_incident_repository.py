@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -34,3 +34,23 @@ def test_repository_rejects_unknown_id() -> None:
     with pytest.raises(IncidentNotFoundError):
         InMemoryIncidentRepository().get(uuid4())
 
+
+def test_repository_finds_only_expired_pending_incidents() -> None:
+    repository = InMemoryIncidentRepository()
+    now = datetime.now(timezone.utc)
+    due = incident().model_copy(
+        update={
+            "status": "pending_confirmation",
+            "confirmation_deadline": now - timedelta(seconds=1),
+        }
+    )
+    future = incident().model_copy(
+        update={
+            "status": "pending_confirmation",
+            "confirmation_deadline": now + timedelta(seconds=1),
+        }
+    )
+    repository.add(due)
+    repository.add(future)
+    repository.add(incident())
+    assert repository.pending_due(now) == [due]
