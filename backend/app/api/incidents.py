@@ -3,7 +3,8 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
 from backend.app.repositories.incidents import IncidentNotFoundError, InMemoryIncidentRepository
-from backend.app.schemas import CancelIncident, IncidentRead, IncidentStatusUpdate
+from backend.app.schemas import CancelIncident, IncidentRead, IncidentStatusUpdate, SosPayload
+from backend.app.services.sos import SosUnavailableError, create_sos_payload
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 repository = InMemoryIncidentRepository()
@@ -49,3 +50,11 @@ def update_incident_status(incident_id: UUID, command: IncidentStatusUpdate) -> 
     updated = incident.model_copy(update={"status": command.status})
     return repository.replace(updated)
 
+
+@router.get("/{incident_id}/sos", response_model=SosPayload)
+def get_incident_sos(incident_id: UUID) -> SosPayload:
+    incident = _get_or_404(incident_id)
+    try:
+        return create_sos_payload(incident)
+    except SosUnavailableError as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error

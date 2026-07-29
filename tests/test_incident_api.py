@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.api.incidents import repository
 from backend.app.main import app
-from backend.app.schemas import IncidentRead, RiskResult
+from backend.app.schemas import IncidentRead, Location, RiskResult
 
 client = TestClient(app)
 
@@ -16,6 +16,7 @@ def make_incident(status: str = "detected") -> IncidentRead:
         deviceId="tractor-001",
         occurredAt=datetime.now(timezone.utc),
         status=status,
+        location=Location(latitude=36.3012, longitude=127.5874),
         risk=RiskResult(
             classification="rollover",
             riskScore=0.95,
@@ -63,3 +64,16 @@ def test_cancel_pending_incident() -> None:
     assert response.status_code == 200
     assert response.json()["status"] == "cancelled"
 
+
+def test_get_sos_handoff_for_detected_incident() -> None:
+    incident = repository.add(make_incident())
+    response = client.get(f"/api/v1/incidents/{incident.id}/sos")
+    assert response.status_code == 200
+    assert response.json()["incidentId"] == str(incident.id)
+    assert response.json()["emergencyCallUri"] == "tel:119"
+
+
+def test_sos_handoff_rejects_pending_incident() -> None:
+    incident = repository.add(make_incident("pending_confirmation"))
+    response = client.get(f"/api/v1/incidents/{incident.id}/sos")
+    assert response.status_code == 409
