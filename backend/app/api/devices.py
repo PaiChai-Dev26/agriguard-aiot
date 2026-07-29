@@ -7,7 +7,7 @@ from backend.app.repositories.devices import (
     DeviceNotFoundError,
     InMemoryDeviceRepository,
 )
-from backend.app.schemas import DeviceRead, DeviceRegister
+from backend.app.schemas import DevicePosition, DeviceRead, DeviceRegister
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
 repository = InMemoryDeviceRepository()
@@ -41,3 +41,13 @@ def list_devices() -> list[DeviceRead]:
 def get_device(device_id: str) -> DeviceRead:
     return _get_or_404(device_id)
 
+
+@router.get("/{device_id}/positions", response_model=list[DevicePosition])
+def get_device_positions(device_id: str, limit: int = 150) -> list[DevicePosition]:
+    if limit < 1 or limit > 1000:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="limit must be between 1 and 1000",
+        )
+    _get_or_404(device_id)
+    return repository.position_history(device_id, limit=limit)

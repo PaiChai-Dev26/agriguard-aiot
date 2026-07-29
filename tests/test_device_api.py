@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.api.devices import repository
 from backend.app.main import app
+from simulator.scenarios import generate
 
 client = TestClient(app)
 
@@ -38,3 +39,14 @@ def test_duplicate_registration_returns_conflict() -> None:
 def test_unknown_device_returns_not_found() -> None:
     assert client.get("/api/v1/devices/missing").status_code == 404
 
+
+def test_get_recent_position_history() -> None:
+    for payload in generate("normal", 3):
+        client.post("/api/v1/telemetry", json=payload)
+    response = client.get("/api/v1/devices/sim-tractor-001/positions?limit=2")
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+
+def test_position_history_limit_is_bounded() -> None:
+    assert client.get("/api/v1/devices/tractor-001/positions?limit=0").status_code == 422
