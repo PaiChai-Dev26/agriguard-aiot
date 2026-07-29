@@ -5,18 +5,24 @@ from fastapi import APIRouter, HTTPException, status
 from backend.app.api.devices import repository as device_repository
 from backend.app.config import get_settings
 from backend.app.repositories.incidents import IncidentNotFoundError, InMemoryIncidentRepository
+from backend.app.repositories.support_alerts import InMemorySupportAlertRepository
 from backend.app.schemas import (
     CancelIncident,
     IncidentRead,
     IncidentStatusUpdate,
     NearbyDevice,
     SosPayload,
+    SupportAlert,
+    SupportResponse,
 )
 from backend.app.services.nearby import find_nearby_devices
 from backend.app.services.sos import SosUnavailableError, create_sos_payload
+from backend.app.services.support import create_support_alerts, respond_to_alert
+from backend.app.ws.manager import control_room_manager
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
 repository = InMemoryIncidentRepository()
+support_alert_repository = InMemorySupportAlertRepository()
 
 ALLOWED_TRANSITIONS = {
     "detected": {"acknowledged", "resolved"},
@@ -83,3 +89,59 @@ def get_nearby_devices(incident_id: UUID) -> list[NearbyDevice]:
         incident_location=incident.location,
         radius_meters=get_settings().nearby_radius_meters,
     )
+
+
+@router.post(
+    "/{incident_id}/nearby-alert",
+    response_model=list[SupportAlert],
+    status_code=status.HTTP_201_CREATED,
+)
+async def send_nearby_alert(incident_id: UUID) -> list[SupportAlert]:
+    incident = _get_or_404(incident_id)
+    nearby = get_nearby_devices(incident_id)
+    if not nearby:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="no eligible nearby devices")
+    try:
+        alerts = create_support_alerts(support_alert_repository, incident.id, nearby)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="support alerts already sent",
+        ) from error
+    for alert in alerts:
+        await control_room_manager.broadcast(
+            {
+                "type": "incident.nearby",
+                "alert": alert.model_dump(mode="json", by_alias=True),
+            }
+        )
+    return alerts
+
+
+@router.get("/{incident_id}/support-alerts", response_model=list[SupportAlert])
+def list_support_alerts(incident_id: UUID) -> list[SupportAlert]:
+    _get_or_404(incident_id)
+    return support_alert_repository.for_incident(incident_id)
+
+
+@router.post("/{incident_id}/support-response", response_model=SupportAlert)
+async def submit_support_response(
+    incident_id: UUID,
+    alert_id: UUID,
+    command: SupportResponse,
+) -> SupportAlert:
+    _get_or_404(incident_id)
+    try:
+        alert = support_alert_repository.get(alert_id)
+        if alert.incident_id != incident_id:
+            raise ValueError("alert does not belong to incident")
+        updated = respond_to_alert(support_alert_repository, alert_id, command.status)
+    except (KeyError, ValueError) as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    await control_room_manager.broadcast(
+        {
+            "type": "incident.support_response",
+            "alert": updated.model_dump(mode="json", by_alias=True),
+        }
+    )
+    return updated

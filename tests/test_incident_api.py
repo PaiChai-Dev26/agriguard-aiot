@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from backend.app.api.devices import repository as device_repository
-from backend.app.api.incidents import repository
+from backend.app.api.incidents import repository, support_alert_repository
 from backend.app.main import app
 from backend.app.schemas import DeviceRead, IncidentRead, Location, RiskResult
 
@@ -30,6 +30,7 @@ def make_incident(status: str = "detected") -> IncidentRead:
 def setup_function() -> None:
     repository.clear()
     device_repository.clear()
+    support_alert_repository.clear()
 
 
 def test_list_and_read_incidents() -> None:
@@ -99,3 +100,32 @@ def test_get_nearby_devices_for_incident() -> None:
     response = client.get(f"/api/v1/incidents/{incident.id}/nearby-devices")
     assert response.status_code == 200
     assert [item["device"]["deviceId"] for item in response.json()] == ["near"]
+
+
+def test_send_and_answer_nearby_support_alert() -> None:
+    now = datetime.now(timezone.utc)
+    incident = repository.add(make_incident())
+    device_repository.add(
+        DeviceRead(
+            deviceId="near",
+            displayName="인근 트랙터",
+            deviceType="tractor",
+            registeredAt=now,
+            lastSeenAt=now,
+            online=True,
+            location=Location(latitude=36.302, longitude=127.5874),
+        )
+    )
+    sent = client.post(f"/api/v1/incidents/{incident.id}/nearby-alert")
+    assert sent.status_code == 201
+    alert = sent.json()[0]
+
+    response = client.post(
+        f"/api/v1/incidents/{incident.id}/support-response",
+        params={"alert_id": alert["id"]},
+        json={"status": "available"},
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "available"
+    listed = client.get(f"/api/v1/incidents/{incident.id}/support-alerts").json()
+    assert listed[0]["status"] == "available"
