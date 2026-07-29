@@ -12,9 +12,13 @@ def setup_function() -> None:
 
 
 def test_health_endpoint() -> None:
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    with TestClient(app) as lifespan_client:
+        response = lifespan_client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "ok",
+            "confirmationMonitor": "running",
+        }
 
 
 def test_telemetry_endpoint_returns_explainable_risk() -> None:
