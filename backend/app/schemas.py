@@ -139,3 +139,13 @@ class SupportAlert(BaseModel):
 
 class SupportResponse(BaseModel):
     status: Literal["checking", "available", "unavailable"]
+
+
+class IncidentReplay(BaseModel):
+    incident_id: UUID = Field(alias="incidentId")
+    device_id: str = Field(alias="deviceId")
+    started_at: datetime = Field(alias="startedAt")
+    ended_at: datetime = Field(alias="endedAt")
+    samples: list[Telemetry]
+
+    model_config = {"populate_by_name": True}
