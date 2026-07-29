@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 
+from backend.app.api.devices import router as devices_router
 from backend.app.api.incidents import repository as incident_repository
 from backend.app.api.incidents import router as incidents_router
 from backend.app.config import get_settings
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="AgriGuard API", version="0.1.0", lifespan=lifespan)
+app.include_router(devices_router)
 app.include_router(incidents_router)
 app.include_router(websocket_router)
 
