@@ -10,6 +10,7 @@ from backend.app.api.devices import router as devices_router
 from backend.app.api.incidents import repository as incident_repository
 from backend.app.api.incidents import router as incidents_router
 from backend.app.config import get_settings
+from backend.app.dependencies import replay_repository
 from backend.app.schemas import IncidentRead, RiskResult, Telemetry
 from backend.app.services.confirmation import confirm_due_incidents
 from backend.app.services.risk import assess_risk
@@ -51,6 +52,7 @@ def health() -> dict[str, str]:
 @app.post("/api/v1/telemetry", response_model=RiskResult)
 async def ingest_telemetry(sample: Telemetry) -> RiskResult:
     device_repository.record_telemetry(sample)
+    replay_repository.record(sample)
     result = assess_risk(sample)
     await control_room_manager.broadcast(
         {
@@ -74,6 +76,7 @@ async def ingest_telemetry(sample: Telemetry) -> RiskResult:
                 + timedelta(seconds=settings.confirmation_seconds),
             )
         )
+        replay_repository.snapshot(incident.id, incident.device_id)
         await control_room_manager.broadcast(
             {
                 "type": "incident.suspected",
