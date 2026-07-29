@@ -12,3 +12,14 @@
   "batteryPercent": 78,
   "solarCharging": true
 }
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      CONFIRMATION_SECONDS: "10"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
