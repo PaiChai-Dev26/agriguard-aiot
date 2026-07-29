@@ -6,13 +6,16 @@ from backend.app.config import get_settings
 from backend.app.dependencies import (
     device_repository,
     incident_repository as repository,
+    replay_repository,
     support_alert_repository,
 )
 from backend.app.repositories.incidents import IncidentNotFoundError
+from backend.app.repositories.replays import ReplayNotFoundError
 from backend.app.schemas import (
     CancelIncident,
     IncidentRead,
     IncidentStatusUpdate,
+    IncidentReplay,
     NearbyDevice,
     SosPayload,
     SupportAlert,
@@ -123,6 +126,18 @@ async def send_nearby_alert(incident_id: UUID) -> list[SupportAlert]:
 def list_support_alerts(incident_id: UUID) -> list[SupportAlert]:
     _get_or_404(incident_id)
     return support_alert_repository.for_incident(incident_id)
+
+
+@router.get("/{incident_id}/replay", response_model=IncidentReplay)
+def get_incident_replay(incident_id: UUID) -> IncidentReplay:
+    _get_or_404(incident_id)
+    try:
+        return replay_repository.get(incident_id)
+    except ReplayNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="incident replay not found",
+        ) from error
 
 
 @router.post("/{incident_id}/support-response", response_model=SupportAlert)

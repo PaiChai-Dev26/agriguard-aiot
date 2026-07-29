@@ -37,6 +37,9 @@ def test_telemetry_endpoint_returns_explainable_risk() -> None:
     assert incidents[0]["status"] == "pending_confirmation"
     assert incidents[0]["deviceId"] == "sim-tractor-001"
     assert replay_repository.get(UUID(incidents[0]["id"])).samples
+    replay = client.get(f"/api/v1/incidents/{incidents[0]['id']}/replay")
+    assert replay.status_code == 200
+    assert replay.json()["deviceId"] == "sim-tractor-001"
 
 
 def test_invalid_coordinates_are_rejected() -> None:
