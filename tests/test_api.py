@@ -1,0 +1,29 @@
+from fastapi.testclient import TestClient
+
+from backend.app.main import app
+from simulator.scenarios import generate
+
+client = TestClient(app)
+
+
+def test_health_endpoint() -> None:
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_telemetry_endpoint_returns_explainable_risk() -> None:
+    response = client.post("/api/v1/telemetry", json=next(generate("rollover", 1)))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["classification"] == "rollover"
+    assert body["riskScore"] >= 0.9
+    assert body["evidence"] == ["dangerous_tilt", "impact", "inactivity"]
+
+
+def test_invalid_coordinates_are_rejected() -> None:
+    payload = next(generate("normal", 1))
+    payload["location"]["latitude"] = 100
+    response = client.post("/api/v1/telemetry", json=payload)
+    assert response.status_code == 422
+
