@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AgriGuard 관제 기준선</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { max-width: 900px; margin: 40px auto; padding: 0 20px; background: #0b1220; color: #e5edf7; }
+    header { display: flex; align-items: center; justify-content: space-between; }
+    #status { color: #fbbf24; }
+    .card { margin-top: 24px; padding: 24px; border: 1px solid #334155; border-radius: 16px; background: #111c2f; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 12px; }
+    .metric { padding: 16px; background: #18263d; border-radius: 12px; }
+    .metric b { display: block; margin-top: 8px; font-size: 1.35rem; }
+    button { border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .danger { color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <header><h1>AgriGuard 관제 기준선</h1><span id="status">연결 중</span></header>
+  <p>팀원이 React GIS 화면으로 교체하기 전, 실시간 계약을 검증하는 최소 화면입니다.</p>
+  <section class="card">
+    <h2 id="device">장치 데이터 대기 중</h2>
+    <div class="grid">
+      <div class="metric">Roll<b id="roll">-</b></div>
+      <div class="metric">Pitch<b id="pitch">-</b></div>
+      <div class="metric">위험점수<b id="risk">-</b></div>
+      <div class="metric">사고 상태<b id="incident">-</b></div>
+    </div>
+    <p id="reasons"></p>
+    <button id="cancel">사고 취소</button>
+  </section>
+  <script>
+    let currentDevice = null;
+    const wsScheme = location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${wsScheme}://${location.host}/ws/control-room`);
+    ws.onopen = () => status.textContent = "실시간 연결";
+    ws.onclose = () => status.textContent = "연결 끊김";
+    ws.onmessage = ({data}) => {
+      const message = JSON.parse(data);
+      if (message.type !== "telemetry.processed") return;
+      const d = message.data;
+      currentDevice = d.telemetry.device_id;
+      device.textContent = currentDevice;
+      roll.textContent = `${d.telemetry.roll.toFixed(1)}°`;
+      pitch.textContent = `${d.telemetry.pitch.toFixed(1)}°`;
+      risk.textContent = `${Math.round(d.risk.score * 100)}%`;
+      incident.textContent = d.incident_state;
+      incident.className = d.incident_state === "detected" ? "danger" : "";
+      reasons.textContent = d.risk.reasons.join(", ") || "위험 근거 없음";
+    };
+    cancel.onclick = async () => {
+      if (!currentDevice) return;
+      const response = await fetch(`/api/v1/devices/${currentDevice}/cancel`, {method: "POST"});
+      if (!response.ok) alert("취소할 사고 의심 상태가 없습니다.");
+    };
+  </script>
+</body>
+</html>
+
