@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from threading import RLock
 
-from backend.app.schemas import DevicePosition, DeviceRead
+from backend.app.schemas import DevicePosition, DeviceRead, Telemetry
 
 
 class DeviceNotFoundError(KeyError):
@@ -50,6 +50,39 @@ class InMemoryDeviceRepository:
             self._positions[position.device_id].append(position)
         return position
 
+    def record_telemetry(self, sample: Telemetry) -> DeviceRead:
+        try:
+            current = self.get(sample.device_id)
+        except DeviceNotFoundError:
+            current = self.add(
+                DeviceRead(
+                    deviceId=sample.device_id,
+                    displayName=sample.device_id,
+                    deviceType="simulator" if sample.device_id.startswith("sim-") else "other",
+                    registeredAt=sample.occurred_at,
+                )
+            )
+
+        updated = current.model_copy(
+            update={
+                "last_seen_at": sample.occurred_at,
+                "online": True,
+                "location": sample.location,
+                "battery_percent": sample.battery_percent,
+                "solar_charging": sample.solar_charging,
+            }
+        )
+        self.replace(updated)
+        if sample.location is not None and sample.location.valid:
+            self.add_position(
+                DevicePosition(
+                    deviceId=sample.device_id,
+                    recordedAt=sample.occurred_at,
+                    location=sample.location,
+                )
+            )
+        return updated
+
     def position_history(self, device_id: str, limit: int = 150) -> list[DevicePosition]:
         self.get(device_id)
         with self._lock:
@@ -59,4 +92,3 @@ class InMemoryDeviceRepository:
         with self._lock:
             self._devices.clear()
             self._positions.clear()
-
