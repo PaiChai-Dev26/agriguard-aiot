@@ -6,8 +6,11 @@ from backend.app.repositories.devices import (
     DeviceAlreadyExistsError,
     DeviceNotFoundError,
 )
-from backend.app.dependencies import device_repository as repository
-from backend.app.schemas import DevicePosition, DeviceRead, DeviceRegister
+from backend.app.dependencies import (
+    device_repository as repository,
+    support_alert_repository,
+)
+from backend.app.schemas import DevicePosition, DeviceRead, DeviceRegister, SupportAlert
 
 router = APIRouter(prefix="/api/v1/devices", tags=["devices"])
 
@@ -50,3 +53,9 @@ def get_device_positions(device_id: str, limit: int = 150) -> list[DevicePositio
         )
     _get_or_404(device_id)
     return repository.position_history(device_id, limit=limit)
+
+
+@router.get("/{device_id}/support-alerts", response_model=list[SupportAlert])
+def get_device_support_alerts(device_id: str) -> list[SupportAlert]:
+    _get_or_404(device_id)
+    return support_alert_repository.for_device(device_id)
