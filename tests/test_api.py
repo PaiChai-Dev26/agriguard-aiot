@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from backend.app.api.devices import repository as device_repository
 from backend.app.api.incidents import repository
 from backend.app.main import app
 from simulator.scenarios import generate
@@ -9,6 +10,7 @@ client = TestClient(app)
 
 def setup_function() -> None:
     repository.clear()
+    device_repository.clear()
 
 
 def test_health_endpoint() -> None:
@@ -45,3 +47,12 @@ def test_non_rollover_telemetry_does_not_create_incident() -> None:
     response = client.post("/api/v1/telemetry", json=next(generate("slope", 1)))
     assert response.status_code == 200
     assert client.get("/api/v1/incidents").json() == []
+
+
+def test_telemetry_updates_device_registry() -> None:
+    payload = next(generate("normal", 1))
+    client.post("/api/v1/telemetry", json=payload)
+    device = client.get(f"/api/v1/devices/{payload['deviceId']}").json()
+    assert device["online"] is True
+    assert device["location"]["valid"] is True
+    assert device["batteryPercent"] == payload["batteryPercent"]

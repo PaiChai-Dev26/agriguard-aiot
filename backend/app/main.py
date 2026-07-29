@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 
+from backend.app.api.devices import repository as device_repository
 from backend.app.api.devices import router as devices_router
 from backend.app.api.incidents import repository as incident_repository
 from backend.app.api.incidents import router as incidents_router
@@ -49,6 +50,7 @@ def health() -> dict[str, str]:
 
 @app.post("/api/v1/telemetry", response_model=RiskResult)
 async def ingest_telemetry(sample: Telemetry) -> RiskResult:
+    device_repository.record_telemetry(sample)
     result = assess_risk(sample)
     await control_room_manager.broadcast(
         {
