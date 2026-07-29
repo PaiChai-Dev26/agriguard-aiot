@@ -9,5 +9,4 @@ def test_settings_have_safe_p0_defaults() -> None:
 
 def test_settings_accept_prefixed_environment(monkeypatch) -> None:
     monkeypatch.setenv("AGRIGUARD_CONFIRMATION_SECONDS", "12")
-    assert Settings().confirmation_seconds == 12
-
+    assert Settings.from_environment().confirmation_seconds == 12
