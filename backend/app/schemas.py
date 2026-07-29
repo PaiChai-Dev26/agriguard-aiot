@@ -120,3 +120,22 @@ class NearbyDevice(BaseModel):
     distance_meters: float = Field(ge=0, alias="distanceMeters")
 
     model_config = {"populate_by_name": True}
+
+
+SupportStatus = Literal["pending", "checking", "available", "unavailable"]
+
+
+class SupportAlert(BaseModel):
+    id: UUID
+    incident_id: UUID = Field(alias="incidentId")
+    target_device_id: str = Field(alias="targetDeviceId")
+    distance_meters: float = Field(ge=0, alias="distanceMeters")
+    created_at: datetime = Field(alias="createdAt")
+    status: SupportStatus = "pending"
+    responded_at: datetime | None = Field(default=None, alias="respondedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class SupportResponse(BaseModel):
+    status: Literal["checking", "available", "unavailable"]
