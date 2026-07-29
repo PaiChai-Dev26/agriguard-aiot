@@ -2,8 +2,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 
+from backend.app.api.devices import repository as device_repository
+from backend.app.config import get_settings
 from backend.app.repositories.incidents import IncidentNotFoundError, InMemoryIncidentRepository
-from backend.app.schemas import CancelIncident, IncidentRead, IncidentStatusUpdate, SosPayload
+from backend.app.schemas import (
+    CancelIncident,
+    IncidentRead,
+    IncidentStatusUpdate,
+    NearbyDevice,
+    SosPayload,
+)
+from backend.app.services.nearby import find_nearby_devices
 from backend.app.services.sos import SosUnavailableError, create_sos_payload
 
 router = APIRouter(prefix="/api/v1/incidents", tags=["incidents"])
@@ -58,3 +67,19 @@ def get_incident_sos(incident_id: UUID) -> SosPayload:
         return create_sos_payload(incident)
     except SosUnavailableError as error:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+
+@router.get("/{incident_id}/nearby-devices", response_model=list[NearbyDevice])
+def get_nearby_devices(incident_id: UUID) -> list[NearbyDevice]:
+    incident = _get_or_404(incident_id)
+    if incident.location is None or not incident.location.valid:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="valid incident location is required",
+        )
+    return find_nearby_devices(
+        device_repository.list(),
+        source_device_id=incident.device_id,
+        incident_location=incident.location,
+        radius_meters=get_settings().nearby_radius_meters,
+    )
