@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -42,3 +43,33 @@ class RiskResult(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+
+IncidentStatus = Literal[
+    "suspected",
+    "pending_confirmation",
+    "cancelled",
+    "detected",
+    "acknowledged",
+    "dispatched",
+    "resolved",
+]
+
+
+class IncidentRead(BaseModel):
+    id: UUID
+    device_id: str = Field(alias="deviceId")
+    occurred_at: datetime = Field(alias="occurredAt")
+    status: IncidentStatus
+    risk: RiskResult
+    location: Location | None = None
+    confirmation_deadline: datetime | None = Field(default=None, alias="confirmationDeadline")
+
+    model_config = {"populate_by_name": True}
+
+
+class IncidentStatusUpdate(BaseModel):
+    status: Literal["acknowledged", "dispatched", "resolved"]
+
+
+class CancelIncident(BaseModel):
+    reason: str = Field(default="operator_cancelled", min_length=1, max_length=200)
