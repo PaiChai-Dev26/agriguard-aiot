@@ -46,3 +46,8 @@ the producer. Coordinates use WGS84 decimal degrees.
 
 `classification` is one of `normal`, `slope`, `vibration`, or `rollover`.
 
+The firmware-facing JSON Schema and a copyable example are maintained in
+[`device/protocol`](../device/protocol/README.md). Changes to the Pydantic model and
+the committed device schema must be made together; contract tests reject drift in
+required fields.
+
