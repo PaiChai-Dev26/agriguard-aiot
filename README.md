@@ -250,7 +250,7 @@ agriguard-aiot/
 | **이영준** [@gxmzung](https://github.com/gxmzung) | **Technical PM / IoT·Realtime Integration Lead** | 요구사항·시스템 아키텍처, 하드웨어 구성, 장치 메시지 규격, FastAPI WebSocket, 전체 통합·일정·발표 | 시스템 구성도, 핀맵·통신 규격, WebSocket 모듈, 통합 시나리오, 기술문서·발표자료 | ESP32·GPS 통합, 장애 분석, 코드 리뷰 |
 | **이승민** [@leexxx404](https://github.com/leexxx404) | **Device Firmware & Frontend Developer** | ESP32 센서·액추에이터 제어, React 실시간 화면, WebSocket 클라이언트 | IMU·버튼·부저·LED·릴레이 펌웨어, 장치 상태·사고 알림 UI | 하드웨어 결선, 프론트 API 연동, 통합 테스트 |
 | **장서진** [@seojin103](https://github.com/seojin103) | **Backend & Data Developer** | FastAPI REST API, DB 스키마, 센서·사고 이력 저장, 시뮬레이터·QA | CRUD API, PostgreSQL/PostGIS 모델, 가상 장치 시뮬레이터, API 테스트 | WebSocket 서버, 데이터 전처리, 배포 환경 |
-| **홍은채** [@heunc2](https://github.com/heunc2) | **UI/UX Lead** | 사용자 흐름, 정보구조, 디자인 시스템, GIS 관제·사고 대응 UX | Figma 와이어프레임, 화면 명세, 디자인 토큰, 사용성 점검표 | React 화면 검수, 접근성·반응형 개선, 시연 화면 구성 |
+| **한은채** [@heunc2](https://github.com/heunc2) | **UI/UX Lead** | 사용자 흐름, 정보구조, 디자인 시스템, GIS 관제·사고 대응 UX | Figma 와이어프레임, 화면 명세, 디자인 토큰, 사용성 점검표 | React 화면 검수, 접근성·반응형 개선, 시연 화면 구성 |
 | **김민규** [@k0112mk](https://github.com/k0112mk) | **AI & Sensor Analytics Lead** | IMU 시계열 전처리, 특징 추출, 전도 위험도 판정, 오탐 감소·성능 평가 | 데이터 수집 규격, 기준선 알고리즘, 학습 모델, 평가 리포트, 추론 API | 센서 캘리브레이션 기준, 사고 리플레이 분석 |
 
 ### 역할 경계
@@ -258,7 +258,7 @@ agriguard-aiot/
 - **이영준:** 하드웨어·통신의 설계 및 최종 통합 책임
 - **이승민:** 장치 펌웨어와 관제 프론트의 직접 구현
 - **장서진:** 서버·DB·시뮬레이터의 직접 구현
-- **홍은채:** UI/UX 설계와 구현 검수 책임
+- **한은채:** UI/UX 설계와 구현 검수 책임
 - **김민규:** 센서 분석·AI 모델과 성능 검증 책임
 
 ### 기능별 Owner
@@ -269,9 +269,9 @@ agriguard-aiot/
 | AI 전도 판정 | 김민규 | 이영준, 장서진 |
 | GPS·SOS 상태 머신 | 이영준 | 장서진 |
 | 반경 1 km 검색·협력 알림 | 장서진 | 이영준, 이승민 |
-| WebSocket GIS 관제 | 이영준 | 이승민, 홍은채 |
+| WebSocket GIS 관제 | 이영준 | 이승민, 한은채 |
 | 태양광·배터리 관제 | 이승민 | 이영준, 장서진 |
-| UI/UX·디자인 시스템 | 홍은채 | 이승민 |
+| UI/UX·디자인 시스템 | 한은채 | 이승민 |
 | 통합 시험·발표 | 이영준 | 전원 |
 
 ---
@@ -302,7 +302,7 @@ agriguard-aiot/
 | 이영준 | 요구사항·아키텍처·WebSocket 규격 | 사고 상태 머신·통합 | E2E 안정화·문서·발표 |
 | 이승민 | ESP32 기본 펌웨어·React 기본 화면 | 버튼·부저·릴레이·실시간 UI | 전원 관제·통합 화면 수정 |
 | 장서진 | FastAPI·DB·시뮬레이터 | 사고·거리·응답 API | 로그·테스트·배포 보완 |
-| 홍은채 | Figma·정보구조·디자인 시스템 | 관제·사고 대응 UX | 사용성 검수·시연 UI 개선 |
+| 한은채 | Figma·정보구조·디자인 시스템 | 관제·사고 대응 UX | 사용성 검수·시연 UI 개선 |
 | 김민규 | 데이터 수집·라벨 기준 | 특징 추출·기준 모델·ML 모델 | 성능 평가·오탐 개선·추론 통합 |
 
 ---
