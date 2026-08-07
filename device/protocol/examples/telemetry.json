@@ -1,0 +1,26 @@
+{
+  "type": "device.telemetry",
+  "deviceId": "tractor-001",
+  "occurredAt": "2026-08-07T14:12:30+09:00",
+  "imu": {
+    "accelX": 0.02,
+    "accelY": 0.91,
+    "accelZ": 0.12,
+    "gyroX": 1.2,
+    "gyroY": 0.5,
+    "gyroZ": 0.2,
+    "roll": 76.0,
+    "pitch": 8.0
+  },
+  "location": {
+    "latitude": 36.3012,
+    "longitude": 127.5874,
+    "speedKph": 0.0,
+    "valid": true
+  },
+  "impactG": 2.8,
+  "inactiveSeconds": 5.0,
+  "batteryPercent": 78,
+  "solarCharging": true
+}
+

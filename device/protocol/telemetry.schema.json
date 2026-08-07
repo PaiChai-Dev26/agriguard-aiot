@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agriguard.local/schemas/device-telemetry-v1.json",
+  "title": "AgriGuard device telemetry v1",
+  "description": "ESP32 to FastAPI telemetry contract. Acceleration is measured in g and angular velocity in degrees per second.",
+  "type": "object",
+  "required": ["deviceId", "occurredAt", "imu"],
+  "properties": {
+    "type": {"const": "device.telemetry"},
+    "deviceId": {"type": "string", "minLength": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "imu": {
+      "type": "object",
+      "required": ["accelX", "accelY", "accelZ", "gyroX", "gyroY", "gyroZ", "roll", "pitch"],
+      "properties": {
+        "accelX": {"type": "number", "description": "X-axis acceleration in g"},
+        "accelY": {"type": "number", "description": "Y-axis acceleration in g"},
+        "accelZ": {"type": "number", "description": "Z-axis acceleration in g"},
+        "gyroX": {"type": "number", "description": "X-axis angular velocity in degrees/second"},
+        "gyroY": {"type": "number", "description": "Y-axis angular velocity in degrees/second"},
+        "gyroZ": {"type": "number", "description": "Z-axis angular velocity in degrees/second"},
+        "roll": {"type": "number", "minimum": -180, "maximum": 180, "description": "Roll angle in degrees"},
+        "pitch": {"type": "number", "minimum": -180, "maximum": 180, "description": "Pitch angle in degrees"}
+      }
+    },
+    "location": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["latitude", "longitude"],
+          "properties": {
+            "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+            "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+            "speedKph": {"type": "number", "minimum": 0, "default": 0},
+            "valid": {"type": "boolean", "default": true}
+          }
+        }
+      ]
+    },
+    "impactG": {"type": "number", "minimum": 0, "default": 0},
+    "inactiveSeconds": {"type": "number", "minimum": 0, "default": 0},
+    "batteryPercent": {"type": "integer", "minimum": 0, "maximum": 100, "default": 100},
+    "solarCharging": {"type": "boolean", "default": false}
+  }
+}
